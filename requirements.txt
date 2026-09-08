@@ -1,0 +1,9 @@
+langchain
+langchain-community
+chromadb
+pymupdf
+faster-whisper
+sentence-transformers
+langchain-text-splitters
+ollama
+langchain-ollama
