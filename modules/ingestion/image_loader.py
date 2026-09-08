@@ -16,7 +16,8 @@ def load_and_chunk_image(file_path: str, chunk_size: int = 500, chunk_overlap: i
         ]
     )
     
-    extracted_text = response['message']['content']
+    # NEW: Object-style attribute access (compatible with modern ollama SDK)
+    extracted_text = response.message.content
     
     # Split the description into chunks for vector indexing
     splitter = RecursiveCharacterTextSplitter(

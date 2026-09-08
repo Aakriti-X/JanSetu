@@ -7,3 +7,5 @@ sentence-transformers
 langchain-text-splitters
 ollama
 langchain-ollama
+langchain-huggingface
+langchain-chroma
