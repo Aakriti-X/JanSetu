@@ -13,7 +13,11 @@ app = FastAPI(title="SIH25231 Offline RAG API")
 # CRITICAL: Allow the Next.js frontend (port 3000) to communicate with this backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"], 
+    allow_origins=[
+        "http://localhost:5173",  # Vite default port
+        "http://localhost:3000",
+        "http://127.0.0.1:5173"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -27,7 +31,7 @@ class QueryRequest(BaseModel):
 async def query_rag(request: QueryRequest):
     try:
         # Pass the question to your existing Llama 3 / ChromaDB function
-        answer, sources = ask_question(request.question)
+        answer, sources = ask_question(request.question, user_id="default_server_user")
         
         # Format sources to send back to the frontend
         formatted_sources = [
@@ -48,7 +52,7 @@ async def upload_document(file: UploadFile = File(...)):
     
     try:
         # Route the file through your existing ingestion pipeline
-        ingest_file(temp_path)
+        ingest_file(temp_path, user_id="default_server_user", original_filename=file.filename)
         os.remove(temp_path) # Clean up after successful ingestion
         return {"status": "success", "message": f"Successfully ingested {file.filename}"}
     except Exception as e:
@@ -58,5 +62,12 @@ async def upload_document(file: UploadFile = File(...)):
 
 if __name__ == "__main__":
     import uvicorn
+    import database
+    
+    # Ensure the database is initialized and the default user exists
+    database.init_db()
+    if not database.user_exists("default_server_user"):
+        database.create_user("default_server_user", "Server User", "0000")
+        
     # Runs the API on localhost:8000
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=True, ssl_keyfile="key.pem", ssl_certfile="cert.pem")

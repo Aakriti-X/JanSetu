@@ -1,7 +1,7 @@
-﻿// api.js — Frontend API client for the SIH25231 RAG backend (http://localhost:8000)
+// api.js — Frontend API client for the SIH25231 RAG backend (http://localhost:8000)
 // Auth: backend uses X-User-ID and X-User-PIN headers on all protected routes.
 
-const BASE_URL = "http://localhost:8000";
+const BASE_URL = "https://localhost:8000";
 
 // Internal helper
 async function request(endpoint, options = {}) {
