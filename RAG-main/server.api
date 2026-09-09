@@ -1,0 +1,62 @@
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+import shutil
+import os
+
+# Import your existing offline logic
+from modules.llm.query_engine import ask_question
+from ingest_manager import ingest_file
+
+app = FastAPI(title="SIH25231 Offline RAG API")
+
+# CRITICAL: Allow the Next.js frontend (port 3000) to communicate with this backend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"], 
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Data model for incoming questions
+class QueryRequest(BaseModel):
+    question: str
+
+@app.post("/api/query")
+async def query_rag(request: QueryRequest):
+    try:
+        # Pass the question to your existing Llama 3 / ChromaDB function
+        answer, sources = ask_question(request.question)
+        
+        # Format sources to send back to the frontend
+        formatted_sources = [
+            {"file": doc.metadata.get("source", "Unknown"), "preview": doc.page_content[:150]} 
+            for doc in sources
+        ]
+        
+        return {"answer": answer, "sources": formatted_sources}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/upload")
+async def upload_document(file: UploadFile = File(...)):
+    # Save the uploaded file temporarily
+    temp_path = f"temp_{file.filename}"
+    with open(temp_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    
+    try:
+        # Route the file through your existing ingestion pipeline
+        ingest_file(temp_path)
+        os.remove(temp_path) # Clean up after successful ingestion
+        return {"status": "success", "message": f"Successfully ingested {file.filename}"}
+    except Exception as e:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+        raise HTTPException(status_code=500, detail=str(e))
+
+if __name__ == "__main__":
+    import uvicorn
+    # Runs the API on localhost:8000
+    uvicorn.run(app, host="0.0.0.0", port=8000)

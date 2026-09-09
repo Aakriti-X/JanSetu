@@ -1,0 +1,25 @@
+﻿# Virtual Environment
+venv/
+.venv/
+
+# Vector Database & Model Caches
+my_vectordb/
+.chroma/
+models/
+*.bin
+*.onnx
+
+# Data & Storage
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Python Caches
+__pycache__/
+*.py[cod]
+
+# System & Environment Files
+.env
+.DS_Store
+Thumbs.db

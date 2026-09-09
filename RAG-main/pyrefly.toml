@@ -1,0 +1,8 @@
+[tool.pyrefly]
+python_interpreter = "C:\\Users\\ether\\AppData\\Local\\Programs\\Python\\Python314\\python.exe"
+
+[tool.pyrefly.search_path]
+site_packages = [
+  "C:\\Users\\ether\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\site-packages",
+  "C:\\Users\\ether\\AppData\\Roaming\\Python\\Python314\\site-packages"
+]
