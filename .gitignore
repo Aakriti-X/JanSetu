@@ -1,4 +1,19 @@
-﻿# Virtual Environment
+# Secrets and Credentials
+.env
+.env.*
+*.pem
+*.key
+credentials.json
+secrets.json
+api_keys.json
+
+# SQLite Databases
+*.db
+*.sqlite
+*.sqlite3
+ingestion_log.db
+
+# Virtual Environment
 venv/
 .venv/
 
@@ -20,6 +35,5 @@ __pycache__/
 *.py[cod]
 
 # System & Environment Files
-.env
 .DS_Store
 Thumbs.db
