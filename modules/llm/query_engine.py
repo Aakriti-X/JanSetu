@@ -20,7 +20,7 @@ def ask_question(question: str):
 
     # Retrieve the top 3 most relevant chunks from ChromaDB
     vector_store = get_vector_store()
-    retriever = vector_store.as_retriever(search_kwargs={"k": 3})
+    retriever = vector_store.as_retriever(search_kwargs={"k": 8})
     docs = retriever.invoke(question)
     
     # Step 3: Safety check if no documents match
