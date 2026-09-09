@@ -1,28 +1,40 @@
 import ollama
+import easyocr
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from config import VISION_MODEL, CHUNK_SIZE, CHUNK_OVERLAP
 
 _IMAGE_PROMPT = (
-    "Extract all readable text from this image. "
-    "Then provide a detailed description of any charts, diagrams, tables, "
-    "or visual data present. Be thorough."
+    "Provide a detailed description of any charts, diagrams, tables, "
+    "or visual data present in this image. Be thorough."
 )
 
+_reader = None
+
+def _get_ocr_reader():
+    global _reader
+    if _reader is None:
+        print("Loading EasyOCR model...")
+        _reader = easyocr.Reader(['en'])
+    return _reader
 
 def load_and_chunk_image(file_path: str,
                           chunk_size: int = CHUNK_SIZE,
                           chunk_overlap: int = CHUNK_OVERLAP) -> list:
     """
-    Uses a local vision model (LLaVA via Ollama) to extract text and descriptions
-    from an image file, then splits the output into vector-store-ready chunks.
-
-    Returns a list of LangChain Document objects with metadata:
-        {"source": file_path, "type": "image"}
-
-    Returns an empty list if Ollama is unavailable or analysis fails.
+    Uses EasyOCR to extract exact text from an image file, and a local vision model 
+    (LLaVA via Ollama) to extract descriptions, then splits the output into 
+    vector-store-ready chunks.
     """
-    print(f"Analyzing image with local '{VISION_MODEL}' model: {file_path}...")
+    print(f"Extracting text via EasyOCR for: {file_path}...")
+    try:
+        reader = _get_ocr_reader()
+        ocr_result = reader.readtext(file_path, detail=0)
+        ocr_text = "\n".join(ocr_result)
+    except Exception as e:
+        print(f"WARNING: OCR failed for '{file_path}': {e}")
+        ocr_text = ""
 
+    print(f"Analyzing image with local '{VISION_MODEL}' model: {file_path}...")
     try:
         response = ollama.chat(
             model=VISION_MODEL,
@@ -34,25 +46,24 @@ def load_and_chunk_image(file_path: str,
                 }
             ],
         )
-        extracted_text = response.message.content
-
+        vision_text = response.message.content
     except ollama.ResponseError as e:
-        # Model not pulled, or model name wrong
         print(
             f"ERROR: Ollama model '{VISION_MODEL}' returned an error: {e}\n"
             f"  Fix: Run  ollama pull {VISION_MODEL}  and try again."
         )
-        return []
+        vision_text = ""
     except Exception as e:
-        # Ollama not running, network error, corrupt image, etc.
         print(
             f"ERROR: Image analysis failed for '{file_path}': {e}\n"
             "  Make sure Ollama is running:  ollama serve"
         )
-        return []
+        vision_text = ""
 
-    if not extracted_text or not extracted_text.strip():
-        print(f"WARNING: Vision model returned empty text for '{file_path}'.")
+    combined_text = f"--- OCR Text ---\n{ocr_text}\n\n--- Visual Description ---\n{vision_text}"
+
+    if not combined_text.strip() or combined_text.strip() == "--- OCR Text ---\n\n\n--- Visual Description ---":
+        print(f"WARNING: Could not extract any text or description for '{file_path}'.")
         return []
 
     splitter = RecursiveCharacterTextSplitter(
@@ -61,7 +72,7 @@ def load_and_chunk_image(file_path: str,
         separators=["\n\n", "\n", ". ", " ", ""],
     )
     chunks = splitter.create_documents(
-        texts=[extracted_text],
+        texts=[combined_text],
         metadatas=[{"source": file_path, "type": "image"}],
     )
 

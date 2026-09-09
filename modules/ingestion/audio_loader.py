@@ -1,6 +1,11 @@
+import os
+import traceback
 from faster_whisper import WhisperModel
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from config import WHISPER_MODEL_SIZE, WHISPER_DEVICE, WHISPER_COMPUTE_TYPE, CHUNK_SIZE, CHUNK_OVERLAP
+
+# Fix for OpenMP crashes on Windows with faster-whisper
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 # Module-level cache: model is loaded once and reused across all calls in the session
 _whisper_model: WhisperModel | None = None
@@ -44,6 +49,7 @@ def load_and_chunk_audio(file_path: str,
         segments = list(segments)
     except Exception as e:
         print(f"ERROR: Audio transcription failed for '{file_path}': {e}")
+        traceback.print_exc()
         return []
 
     if not segments:

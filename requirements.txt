@@ -12,8 +12,12 @@ chromadb
 # Document loaders
 pymupdf
 
-# Audio transcription (offline)
-faster-whisper
+# Vision OCR
+easyocr
+
+# Audio transcription (cloud via AssemblyAI)
+assemblyai
+python-dotenv
 
 # Embeddings (offline)
 sentence-transformers
