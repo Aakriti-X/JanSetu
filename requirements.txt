@@ -1,11 +1,27 @@
+# Core RAG stack
 langchain
 langchain-community
-chromadb
-pymupdf
-faster-whisper
-sentence-transformers
 langchain-text-splitters
-ollama
-langchain-ollama
-langchain-huggingface
 langchain-chroma
+langchain-huggingface
+langchain-ollama
+
+# Vector database
+chromadb
+
+# Document loaders
+pymupdf
+
+# Audio transcription (offline)
+faster-whisper
+
+# Embeddings (offline)
+sentence-transformers
+
+# Vision + LLM inference (offline via Ollama)
+ollama
+
+# FastAPI web server
+fastapi
+uvicorn[standard]
+python-multipart
